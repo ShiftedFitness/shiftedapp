@@ -3,20 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zapier Chatbot Inline</title>
+    <title>Shifted Chatbot</title>
     <script
       async
       type="module"
       src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"
     ></script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #fefefe; /* Optional: match app background */
+      }
+      zapier-interfaces-chatbot-embed {
+        height: 100vh;
+        width: 100vw;
+      }
+    </style>
   </head>
-  <body style="margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh;">
+  <body>
     <zapier-interfaces-chatbot-embed 
       is-popup="false" 
-      chatbot-id="cm92h7b2f000njmenk0j2duzo"
-      height="600px"
-      width="400px"
-    ></zapier-interfaces-chatbot-embed>
+      chatbot-id="cm92h7b2f000njmenk0j2duzo">
+    </zapier-interfaces-chatbot-embed>
   </body>
 </html>
-
