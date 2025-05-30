@@ -1,10 +1,153 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Page</title>
-  </head>
-  <body style="background: #0a5247; color: white; font-family: sans-serif; text-align: center; padding-top: 40px;">
-    <h1>Hello from Shifted Fitness</h1>
-    <p>If you see this, GitHub Pages is working correctly.</p>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shifted Fitness Video Upload</title>
+  <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0a5247;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    button {
+      background-color: white;
+      color: #0a5247;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 2rem;
+    }
+
+    .video-container, .frames-container {
+      margin-top: 1.5rem;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .frames-container img {
+      width: 100%;
+      max-width: 100%;
+      margin: 0.5rem 0;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    .url {
+      font-size: 0.9rem;
+      word-break: break-word;
+      margin: 0.5rem 0;
+    }
+
+    .error {
+      color: #ffb3b3;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Upload Your Exercise Video</h1>
+  <button id="upload_widget">Upload Video</button>
+
+  <div class="video-container">
+    <p class="url" id="videoUrl"></p>
+  </div>
+  <div class="frames-container" id="framesContainer"></div>
+  <div id="errorMessage" class="error"></div>
+
+  <script>
+    window.addEventListener('load', function () {
+      try {
+        function getQueryParam(name) {
+          const urlParams = new URLSearchParams(window.location.search);
+          return urlParams.get(name) || "unknown_user";
+        }
+
+        const userId = getQueryParam("user_id");
+        const cloudName = 'dbfvogb95';
+        const uploadPreset = 'shifted_app';
+
+        if (typeof cloudinary === 'undefined') {
+          document.getElementById("errorMessage").innerText = "❌ Cloudinary script failed to load.";
+          return;
+        }
+
+        const widget = cloudinary.createUploadWidget({
+          cloudName: cloudName,
+          uploadPreset: uploadPreset,
+          sources: ['local', 'camera'],
+          resourceType: 'video',
+          folder: 'technique_feedback',
+          multiple: false,
+          maxFileSize: 10000000,
+          clientAllowedFormats: ['mp4', 'mov', 'webm']
+        }, (error, result) => {
+          if (error) {
+            document.getElementById("errorMessage").innerText = "❌ Error during upload: " + error.message;
+            console.error("Cloudinary error:", error);
+            return;
+          }
+
+          if (result && result.event === "success") {
+            const videoUrl = result.info.secure_url;
+            document.getElementById("videoUrl").innerText = "Uploaded: " + videoUrl;
+
+            const videoId = result.info.public_id;
+            const frameTimes = [3, 4.5, 6, 7.5];
+            const frameUrls = frameTimes.map(time =>
+              `https://res.cloudinary.com/${cloudName}/video/upload/so_${time}/${videoId}.jpg`
+            );
+
+            const framesContainer = document.getElementById("framesContainer");
+            framesContainer.innerHTML = '<h2>Extracted Frames</h2>';
+            frameUrls.forEach(url => {
+              const img = document.createElement('img');
+              img.src = url;
+              framesContainer.appendChild(img);
+            });
+
+            // Send to Make webhook
+            fetch("https://hook.eu2.make.com/0qf9ojw2jt3xsb9z3up2dtmvtllmn9ny", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                user_id: userId,
+                video_url: videoUrl,
+                frame_urls: frameUrls
+              })
+            });
+          }
+        });
+
+        document.getElementById("upload_widget").addEventListener("click", function () {
+          widget.open();
+        }, false);
+      } catch (err) {
+        document.getElementById("errorMessage").innerText = "❌ JS Error: " + err.message;
+        console.error("Script error:", err);
+      }
+    });
+  </script>
+
+</body>
 </html>
