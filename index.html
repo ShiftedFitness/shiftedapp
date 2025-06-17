@@ -1,2 +1,28 @@
-<script async type='module' src='https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js'></script>
-<zapier-interfaces-chatbot-embed is-popup='false' chatbot-id='cm92h7b2f000njmenk0j2duzo' height='600px' width='400px'></zapier-interfaces-chatbot-embed>
+<!DOCTYPE html>
+<html style="margin: 0; padding: 0; height: 100%;">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Darya – Shifted Chatbot</title>
+    <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      zapier-interfaces-chatbot-embed {
+        height: 100vh;
+        width: 100vw;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <zapier-interfaces-chatbot-embed
+      is-popup="false"
+      chatbot-id="cm92h7b2f000njmenk0j2duzo"
+    ></zapier-interfaces-chatbot-embed>
+  </body>
+</html>
