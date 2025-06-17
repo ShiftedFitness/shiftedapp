@@ -2,7 +2,7 @@
 <html style="margin: 0; padding: 0; height: 100%;">
   <head>
     <meta charset="UTF-8" />
-    <title>Darya – Shifted Chatbot</title>
+    <title>Darya – Shifted Recipe Bot</title>
     <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
     <style>
       html, body {
@@ -21,8 +21,20 @@
   </head>
   <body>
     <zapier-interfaces-chatbot-embed
+      id="darya-chatbot"
       is-popup="false"
       chatbot-id="cm92h7b2f000njmenk0j2duzo"
     ></zapier-interfaces-chatbot-embed>
+
+    <script>
+      // Parse query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatbotElement = document.getElementById("darya-chatbot");
+
+      // Pass all params to Zapier chatbot
+      urlParams.forEach((value, key) => {
+        chatbotElement.setAttribute(`param:${key}`, value);
+      });
+    </script>
   </body>
 </html>
