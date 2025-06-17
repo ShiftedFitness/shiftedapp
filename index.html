@@ -12,29 +12,26 @@
         width: 100%;
         overflow: hidden;
       }
-      zapier-interfaces-chatbot-embed {
-        height: 100vh;
-        width: 100vw;
-        display: block;
-      }
     </style>
   </head>
   <body>
-    <zapier-interfaces-chatbot-embed
-      id="darya-chatbot"
-      is-popup="false"
-      chatbot-id="cm92h7b2f000njmenk0j2duzo"
-    ></zapier-interfaces-chatbot-embed>
+    <div id="chatbot-container"></div>
 
     <script>
       // Parse query string
       const urlParams = new URLSearchParams(window.location.search);
-      const chatbotElement = document.getElementById("darya-chatbot");
 
-      // Pass all params to Zapier chatbot
+      // Build embed attributes
+      let embedAttributes = `is-popup="false" chatbot-id="cm92h7b2f000njmenk0j2duzo"`;
+
       urlParams.forEach((value, key) => {
-        chatbotElement.setAttribute(`param:${key}`, value);
+        embedAttributes += ` param:${key}="${value}"`;
       });
+
+      // Generate embed element and inject
+      const embedHTML = `<zapier-interfaces-chatbot-embed style="height:100vh; width:100vw; display:block;" ${embedAttributes}></zapier-interfaces-chatbot-embed>`;
+
+      document.getElementById('chatbot-container').innerHTML = embedHTML;
     </script>
   </body>
 </html>
