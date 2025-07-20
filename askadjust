@@ -10,6 +10,7 @@
       font-family: system-ui, sans-serif;
       background: #f9f9f9;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -23,6 +24,7 @@
       background: white;
       border-radius: 12px;
       overflow: hidden;
+      margin-top: 10px;
     }
 
     zapier-interfaces-chatbot-embed {
@@ -30,28 +32,41 @@
       height: 100%;
       border: none;
     }
+
+    .debug {
+      font-size: 14px;
+      color: #555;
+      padding-top: 8px;
+    }
   </style>
 </head>
 <body>
+
+  <div class="debug" id="debug-info">Loading...</div>
   <div class="chatbot-container"></div>
 
   <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
   <script>
-    // Get all URL params and rebuild them into a query string
+    // Get just the "name" param from the URL
     const rawParams = new URLSearchParams(window.location.search);
-    const queryString = rawParams.toString();
+    const name = rawParams.get("name") || "";
+    const paramString = name ? `?name=${encodeURIComponent(name)}` : "";
 
-    // Create the chatbot embed element
+    // Display the debug info above the chatbot
+    document.getElementById("debug-info").textContent =
+      name ? `Name param detected: ${name}` : "No name param passed.";
+
+    console.log("Passing query string:", paramString);
+
+    // Create and embed the chatbot
     const chatbot = document.createElement('zapier-interfaces-chatbot-embed');
     chatbot.setAttribute('is-popup', 'false');
     chatbot.setAttribute('chatbot-id', 'cmc1l7hcr0078hbluug1yd5q4');
 
-    // Only add query-params if we have any
-    if (queryString) {
-      chatbot.setAttribute('query-params', '?' + queryString);
+    if (paramString) {
+      chatbot.setAttribute('query-params', paramString);
     }
 
-    // Inject into container
     document.querySelector('.chatbot-container').appendChild(chatbot);
   </script>
 </body>
