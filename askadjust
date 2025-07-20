@@ -33,12 +33,26 @@
   </style>
 </head>
 <body>
-  <div class="chatbot-container">
-    <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
-    <zapier-interfaces-chatbot-embed
-      is-popup="false"
-      chatbot-id="cmc1l7hcr0078hbluug1yd5q4">
-    </zapier-interfaces-chatbot-embed>
-  </div>
+  <div class="chatbot-container"></div>
+
+  <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
+  <script>
+    // Get all URL params and rebuild them into a query string
+    const rawParams = new URLSearchParams(window.location.search);
+    const queryString = rawParams.toString();
+
+    // Create the chatbot embed element
+    const chatbot = document.createElement('zapier-interfaces-chatbot-embed');
+    chatbot.setAttribute('is-popup', 'false');
+    chatbot.setAttribute('chatbot-id', 'cmc1l7hcr0078hbluug1yd5q4');
+
+    // Only add query-params if we have any
+    if (queryString) {
+      chatbot.setAttribute('query-params', '?' + queryString);
+    }
+
+    // Inject into container
+    document.querySelector('.chatbot-container').appendChild(chatbot);
+  </script>
 </body>
 </html>
