@@ -1,59 +1,39 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html style="margin: 0; padding: 0; height: 100%;">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Adjust Neurodiversity Assistant</title>
+  <title>Darya – Shifted Recipe Bot</title>
+  <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #f9f9f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .chatbot-container {
-      width: 100%;
-      max-width: 420px;
-      height: 80vh;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    zapier-interfaces-chatbot-embed {
-      width: 100%;
+      padding: 0;
       height: 100%;
-      border: none;
+      width: 100%;
+      overflow: hidden;
     }
   </style>
 </head>
 <body>
-  <div class="chatbot-container" id="chatbot-container"></div>
-
-  <!-- Load Zapier's chatbot script -->
-  <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
+  <div id="chatbot-container"></div>
 
   <script type="module">
-    // Step 1: Read the query params from the URL
+    // Read query string, e.g. ?uuid=103
     const rawParams = new URLSearchParams(window.location.search);
-    const queryString = rawParams.toString(); // e.g., uuid=103
+    const queryString = rawParams.toString(); // -> uuid=103
 
-    // Step 2: Create the embed tag
+    // Create the embed tag
     const chatbot = document.createElement('zapier-interfaces-chatbot-embed');
     chatbot.setAttribute('is-popup', 'false');
-    chatbot.setAttribute('chatbot-id', 'cmc1l7hcr0078hbluug1yd5q4');
+    chatbot.setAttribute('chatbot-id', 'cm92h7b2f000njmenk0j2duzo'); // Darya bot
+    chatbot.setAttribute('style', 'height:100vh; width:100vw; display:block;');
 
-    // Step 3: Attach query-params if available
+    // If any query params exist, attach them properly
     if (queryString) {
       chatbot.setAttribute('query-params', '?' + queryString);
     }
 
-    // Step 4: Inject it into the container
+    // Inject into page
     document.getElementById('chatbot-container').appendChild(chatbot);
   </script>
 </body>
