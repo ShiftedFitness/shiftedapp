@@ -18,22 +18,22 @@
   <div id="chatbot-container"></div>
 
   <script type="module">
-    // Read query string, e.g. ?uuid=103
+    // Read the query string from the URL (e.g., ?uuid=103)
     const rawParams = new URLSearchParams(window.location.search);
-    const queryString = rawParams.toString(); // -> uuid=103
+    const queryString = rawParams.toString(); // returns uuid=103
 
-    // Create the embed tag
+    // Create the chatbot embed element
     const chatbot = document.createElement('zapier-interfaces-chatbot-embed');
     chatbot.setAttribute('is-popup', 'false');
-    chatbot.setAttribute('chatbot-id', 'cm92h7b2f000njmenk0j2duzo'); // Darya bot
+    chatbot.setAttribute('chatbot-id', 'cm92h7b2f000njmenk0j2duzo'); // Your Darya bot ID
     chatbot.setAttribute('style', 'height:100vh; width:100vw; display:block;');
 
-    // If any query params exist, attach them properly
+    // Attach query-params (Zapier requires them passed as a full query string)
     if (queryString) {
       chatbot.setAttribute('query-params', '?' + queryString);
     }
 
-    // Inject into page
+    // Add chatbot to the DOM
     document.getElementById('chatbot-container').appendChild(chatbot);
   </script>
 </body>
