@@ -4,77 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Darya • Shifted Fitness</title>
-  <style>
-    html,body { height:100%; margin:0; background:#000; }
-  </style>
+  <style>html,body{height:100%;margin:0;background:#000;}</style>
 
-  <!-- Chatbase Bubble Embed (YOUR snippet) -->
   <script>
+  // ---------- 1) HARDCODED TEST VALUES (change these) ----------
+  const NAME   = "Taylor";
+  const MOVE   = "Romanian Deadlift";
+  const INTENT = "wants_feedback";
+  const CONTEXT= "";
+
+  const INTRO =
+    (INTENT === "wants_feedback" && MOVE)
+      ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
+      : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
+
+  // ---------- 2) BOOTSTRAP CHATBASE STUB ----------
   (function(){
     if(!window.chatbase || window.chatbase("getState")!=="initialized"){
-      window.chatbase = (...arguments)=>{
-        if(!window.chatbase.q){ window.chatbase.q=[] }
-        window.chatbase.q.push(arguments)
-      };
+      window.chatbase = (...args)=>{ (window.chatbase.q = window.chatbase.q || []).push(args); };
       window.chatbase = new Proxy(window.chatbase,{
-        get(target,prop){ if(prop==="q"){return target.q} return (...args)=>target(prop,...args) }
+        get(target,prop){ if(prop==="q"){return target.q} return (...a)=>target(prop,...a) }
       });
     }
-    const onLoad=function(){
-      const script=document.createElement("script");
-      script.src="https://www.chatbase.co/embed.min.js";
-      script.id="qZ1zajTDomWA0ko7xP5MK"; /* <-- your bot id */
-      script.domain="www.chatbase.co";
+
+    // ---------- 3) QUEUE PERSONALIZATION *BEFORE* WIDGET LOADS ----------
+    window.chatbase("setInitialMessages", [INTRO, CONTEXT ? `Context: ${CONTEXT}` : undefined].filter(Boolean));
+    window.chatbase("identify", {
+      user_id: NAME || undefined,
+      metadata: { name: NAME || undefined, move: MOVE || undefined, intent: INTENT || undefined, context: CONTEXT || undefined, source: "Adalo WebView" }
+    });
+    window.chatbase("open"); // auto-expand on load
+
+    // ---------- 4) LOAD THE WIDGET ----------
+    const onLoad = function(){
+      const script = document.createElement("script");
+      script.src = "https://www.chatbase.co/embed.min.js";
+      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- your bot id must be correct
+      script.domain = "www.chatbase.co";
       document.body.appendChild(script);
     };
-    if(document.readyState==="complete"){ onLoad() } else { window.addEventListener("load",onLoad) }
+    if(document.readyState==="complete"){ onLoad() } else { window.addEventListener("load", onLoad) }
   })();
   </script>
 </head>
-<body>
-
-<script>
-  /* ---------- HARDCODED TEST VALUES ---------- */
-  const name   = "Taylor";
-  const move   = "Romanian Deadlift";
-  const intent = "wants_feedback";
-  const context= ""; // optional
-
-  const intro =
-    (intent === 'wants_feedback' && move)
-      ? `Hello ${name || 'there'}, so you need some help with the ${move}. No worries — I've got you covered.`
-      : (name ? `Hi ${name}! How can I help today?` : `Hi! What can I help you with today?`);
-
-  function personalizeAndOpen(){
-    // 1) personalize greeting
-    if (typeof window.chatbase?.setInitialMessages === 'function') {
-      const msgs = [intro];
-      if (context) msgs.push(`Context: ${context}`);
-      window.chatbase.setInitialMessages(msgs);
-    }
-    // 2) attach lightweight metadata
-    if (typeof window.chatbase === 'function') {
-      window.chatbase('identify', {
-        user_id: name || undefined,
-        metadata: { name, move, intent, context, source: 'Adalo WebView (hardcoded test)' }
-      });
-    }
-    // 3) AUTO-OPEN the chat (expanded, not just a bubble)
-    if (typeof window.chatbase === 'function') {
-      window.chatbase('open');   // try to open once
-      setTimeout(()=>window.chatbase('open'), 400);   // nudge again in case first call is early
-      setTimeout(()=>window.chatbase('open'), 1000);  // final nudge
-    }
-  }
-
-  // Wait for the Chatbase widget API to be ready, then personalize + open
-  const readyTimer = setInterval(()=>{
-    if (typeof window.chatbase?.setInitialMessages === 'function') {
-      clearInterval(readyTimer);
-      personalizeAndOpen();
-    }
-  }, 200);
-</script>
-
-</body>
+<body></body>
 </html>
