@@ -4,77 +4,98 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Darya • Shifted Fitness</title>
-  <style>
-    html,body { height:100%; margin:0; background:#000; }
-  </style>
-
+  <style>html,body{height:100%;margin:0;background:#000;}</style>
   <script>
   (function(){
-    /* ---------- 1) READ PARAMS ---------- */
+    /* -------- URL params -------- */
     const qp = new URLSearchParams(location.search);
-    const NAME    = (qp.get("name")    || "").trim();
-    const MOVE    = (qp.get("move")    || "").trim();
-    const INTENT  = (qp.get("intent")  || "").trim();
-    const CONTEXT = (qp.get("context") || "").trim();
-    const UID_IN  = (qp.get("uid")     || "").trim();
+    const NAME     = (qp.get("name")     || "").trim();
+    const USER_ID  = (qp.get("uid")      || "").trim();
+    const DAYS_NOW = (qp.get("days")     || "").trim();  // current Training_Days
+    const INTENT   = (qp.get("intent")   || "").trim();  // wants_feedback | update_training_days
+    const MOVE     = (qp.get("move")     || "").trim();
+    const CONTEXT  = (qp.get("context")  || "").trim();
 
-    /* ---------- 2) STABLE USER ID (URL -> localStorage -> generate) ---------- */
-    function getOrCreateUid() {
-      if (UID_IN) {
-        localStorage.setItem("sf_uid", UID_IN);   // keep latest from app
-        return UID_IN;
-      }
-      const stored = localStorage.getItem("sf_uid");
-      if (stored) return stored;
-      // opaque anon id
-      const rand = crypto.getRandomValues(new Uint32Array(4));
-      const anon = `anon_${Date.now().toString(36)}_${Array.from(rand).map(x=>x.toString(36)).join("")}`;
-      localStorage.setItem("sf_uid", anon);
-      return anon;
-    }
-    const USER_ID = getOrCreateUid();
+    /* -------- Adalo DEV credentials (TEST ONLY) -------- */
+    const ADALO_APP_ID        = "36c20042-6d02-4fc8-a289-62cfb2fcf217";      // your App ID
+    const ADALO_COLLECTION_ID = "_1470aa94bbc4403fb29e3bd343796143";         // Users collection ID
+    const ADALO_API_KEY       = "Bearer 0198ogjmyhxxkvkbv9iztrtv";            // TEMP test key
+    const ADALO_ENDPOINT      = `https://api.adalo.com/v0/apps/${ADALO_APP_ID}/collections/${ADALO_COLLECTION_ID}/${encodeURIComponent(USER_ID)}`;
 
-    /* ---------- 3) INTRO MESSAGE ---------- */
-    const INTRO =
-      (INTENT === "wants_feedback" && MOVE)
-        ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
-        : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
-
-    /* ---------- 4) CHATBASE STUB ---------- */
+    /* -------- Chatbase stub -------- */
     if (!window.chatbase || window.chatbase("getState") !== "initialized") {
       window.chatbase = (...args)=>{ (window.chatbase.q = window.chatbase.q || []).push(args); };
       window.chatbase = new Proxy(window.chatbase,{
-        get(target,prop){ if(prop==="q") return target.q; return (...a)=>target(prop,...a) }
+        get(t,p){ if(p==="q") return t.q; return (...a)=>t(p,...a) }
       });
     }
 
-    /* ---------- 5) QUEUE PERSONALIZATION BEFORE LOAD ---------- */
-    window.chatbase("setInitialMessages", [INTRO, CONTEXT ? `Context: ${CONTEXT}` : undefined].filter(Boolean));
+    /* -------- Intro message per intent -------- */
+    const intro =
+      (INTENT === "wants_feedback" && MOVE)
+        ? `Hello ${NAME || 'there'}, need help mastering the ${MOVE}? I’ve got you.`
+        : (INTENT === "update_training_days")
+          ? `Hi ${NAME || "there"}, you’re currently set to ${DAYS_NOW || "—"} training days/week. Want to switch to 3, 4, or 5?`
+          : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
+
+    const initial = [intro];
+    if (CONTEXT) initial.push(`Context: ${CONTEXT}`);
+    window.chatbase("setInitialMessages", initial);
+
     window.chatbase("identify", {
-      user_id: USER_ID,
+      user_id: USER_ID || undefined,
       metadata: {
         name: NAME || undefined,
-        move: MOVE || undefined,
         intent: INTENT || undefined,
-        context: CONTEXT || undefined,
-        source: "Adalo WebView"
+        move: MOVE || undefined,
+        training_days: DAYS_NOW || undefined,
+        source: "Adalo WebView (dev-test)"
       }
     });
-    // start expanded; nudge a couple times for stubborn loads
-    window.chatbase("open");
-    setTimeout(()=>window.chatbase("open"), 350);
-    setTimeout(()=>window.chatbase("open"), 900);
 
-    /* ---------- 6) LOAD CHATBASE SCRIPT (USE YOUR BOT ID) ---------- */
+    /* -------- Handle training days updates (dev direct-to-Adalo) -------- */
+    window.chatbase("onMessage", async (msg) => {
+      if (INTENT !== "update_training_days") return;
+
+      // Only react to simple numeric answers 3/4/5
+      const pick = parseInt((msg.text || "").trim(), 10);
+      if (![3,4,5].includes(pick)) {
+        window.chatbase("sendMessage", { text: "Please choose either 3, 4, or 5 days per week." });
+        return;
+      }
+      if (!USER_ID) {
+        window.chatbase("sendMessage", { text: "I’m missing your user ID, so I can’t update it right now." });
+        return;
+      }
+
+      try {
+        const res = await fetch(ADALO_ENDPOINT, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": ADALO_API_KEY
+          },
+          body: JSON.stringify({ Training_Days: pick })
+        });
+        if (!res.ok) throw new Error(`Adalo update failed (${res.status})`);
+        window.chatbase("sendMessage", { text: `All set — I’ve updated your training to ${pick} days/week.` });
+      } catch (e) {
+        window.chatbase("sendMessage", { text: `Hmm, I couldn't save that just now. ${e.message || ""}` });
+      }
+    });
+
+    /* -------- Load Chatbase + auto-open -------- */
     const onLoad = function(){
-      const script = document.createElement("script");
-      script.src = "https://www.chatbase.co/embed.min.js";
-      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- your bot ID stays here
-      script.domain = "www.chatbase.co";
-      document.body.appendChild(script);
+      const s = document.createElement("script");
+      s.src = "https://www.chatbase.co/embed.min.js";
+      s.id  = "qZ1zajTDomWA0ko7xP5MK"; // your bot ID
+      s.domain = "www.chatbase.co";
+      document.body.appendChild(s);
+      window.chatbase("open");
+      setTimeout(()=>window.chatbase("open"), 350);
+      setTimeout(()=>window.chatbase("open"), 900);
     };
-    if (document.readyState === "complete") onLoad();
-    else window.addEventListener("load", onLoad);
+    if (document.readyState === "complete") onLoad(); else window.addEventListener("load", onLoad);
   })();
   </script>
 </head>
