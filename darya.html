@@ -4,22 +4,30 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Darya • Shifted Fitness</title>
-  <style>html,body{height:100%;margin:0;background:#000;}</style>
+  <style>
+    html,body {
+      height:100%;
+      margin:0;
+      background:#000; /* App background */
+    }
+  </style>
 
   <script>
-  // ---------- 1) HARDCODED TEST VALUES (change these) ----------
-  const NAME   = "Taylor";
-  const MOVE   = "Romanian Deadlift";
-  const INTENT = "wants_feedback";
-  const CONTEXT= "";
-
-  const INTRO =
-    (INTENT === "wants_feedback" && MOVE)
-      ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
-      : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
-
-  // ---------- 2) BOOTSTRAP CHATBASE STUB ----------
   (function(){
+    /* ---------- 1) READ PARAMS WITH FALLBACKS ---------- */
+    const qp = new URLSearchParams(location.search);
+    const NAME   = (qp.get("name")   || "Taylor").trim();                // fallback
+    const MOVE   = (qp.get("move")   || "Romanian Deadlift").trim();     // fallback
+    const INTENT = (qp.get("intent") || "wants_feedback").trim();        // fallback
+    const CONTEXT= (qp.get("context")|| "").trim();
+
+    /* ---------- 2) BUILD INTRO MESSAGE ---------- */
+    const INTRO =
+      (INTENT === "wants_feedback" && MOVE)
+        ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
+        : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
+
+    /* ---------- 3) BOOTSTRAP CHATBASE STUB ---------- */
     if(!window.chatbase || window.chatbase("getState")!=="initialized"){
       window.chatbase = (...args)=>{ (window.chatbase.q = window.chatbase.q || []).push(args); };
       window.chatbase = new Proxy(window.chatbase,{
@@ -27,7 +35,7 @@
       });
     }
 
-    // ---------- 3) QUEUE PERSONALIZATION *BEFORE* WIDGET LOADS ----------
+    /* ---------- 4) QUEUE PERSONALIZATION BEFORE LOAD ---------- */
     window.chatbase("setInitialMessages", [INTRO, CONTEXT ? `Context: ${CONTEXT}` : undefined].filter(Boolean));
     window.chatbase("identify", {
       user_id: NAME || undefined,
@@ -35,11 +43,11 @@
     });
     window.chatbase("open"); // auto-expand on load
 
-    // ---------- 4) LOAD THE WIDGET ----------
+    /* ---------- 5) LOAD CHATBASE SCRIPT ---------- */
     const onLoad = function(){
       const script = document.createElement("script");
       script.src = "https://www.chatbase.co/embed.min.js";
-      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- your bot id must be correct
+      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- your bot ID
       script.domain = "www.chatbase.co";
       document.body.appendChild(script);
     };
