@@ -8,7 +8,20 @@
 
   <script>
   (function(){
-    /* ---------- 1) BOOTSTRAP CHATBASE STUB ---------- */
+    /* 1) Read params from URL with no fallback text in prod */
+    const qp = new URLSearchParams(location.search);
+    const NAME   = (qp.get("name")   || "").trim();
+    const MOVE   = (qp.get("move")   || "").trim();
+    const INTENT = (qp.get("intent") || "").trim();
+    const CONTEXT= (qp.get("context")|| "").trim();
+
+    /* 2) Build intro message */
+    const INTRO =
+      (INTENT === "wants_feedback" && MOVE)
+        ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
+        : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
+
+    /* 3) Bootstrap Chatbase stub */
     if(!window.chatbase || window.chatbase("getState")!=="initialized"){
       window.chatbase = (...args)=>{ (window.chatbase.q = window.chatbase.q || []).push(args); };
       window.chatbase = new Proxy(window.chatbase,{
@@ -16,40 +29,19 @@
       });
     }
 
-    /* ---------- 2) FUNCTION TO PERSONALIZE ---------- */
-    function personalize(){
-      const qp = new URLSearchParams(location.search);
-      const NAME   = (qp.get("name")   !== null ? qp.get("name").trim()   : "Taylor");
-      const MOVE   = (qp.get("move")   !== null ? qp.get("move").trim()   : "Romanian Deadlift");
-      const INTENT = (qp.get("intent") !== null ? qp.get("intent").trim() : "wants_feedback");
-      const CONTEXT= (qp.get("context")!== null ? qp.get("context").trim(): "");
+    /* 4) Queue personalization BEFORE script loads */
+    window.chatbase("setInitialMessages", [INTRO, CONTEXT ? `Context: ${CONTEXT}` : undefined].filter(Boolean));
+    window.chatbase("identify", {
+      user_id: NAME || undefined,
+      metadata: { name: NAME || undefined, move: MOVE || undefined, intent: INTENT || undefined, context: CONTEXT || undefined, source: "Adalo WebView" }
+    });
+    window.chatbase("open"); // ensure chat starts open, no bubble
 
-      const INTRO =
-        (INTENT === "wants_feedback" && MOVE)
-          ? `Hello ${NAME || 'there'}, so you need some help with the ${MOVE}. No worries — I've got you covered.`
-          : (NAME ? `Hi ${NAME}! How can I help today?` : `Hi! What can I help you with today?`);
-
-      window.chatbase("setInitialMessages", [INTRO, CONTEXT ? `Context: ${CONTEXT}` : undefined].filter(Boolean));
-      window.chatbase("identify", {
-        user_id: NAME || undefined,
-        metadata: { name: NAME || undefined, move: MOVE || undefined, intent: INTENT || undefined, context: CONTEXT || undefined, source: "Adalo WebView" }
-      });
-      window.chatbase("open");
-    }
-
-    /* ---------- 3) POLL UNTIL API IS READY ---------- */
-    const readyTimer = setInterval(()=>{
-      if(typeof window.chatbase?.setInitialMessages === 'function'){
-        clearInterval(readyTimer);
-        personalize();
-      }
-    }, 200);
-
-    /* ---------- 4) LOAD CHATBASE SCRIPT ---------- */
+    /* 5) Load Chatbase script */
     const onLoad = function(){
       const script = document.createElement("script");
       script.src = "https://www.chatbase.co/embed.min.js";
-      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- your bot ID
+      script.id  = "qZ1zajTDomWA0ko7xP5MK"; // <-- bot ID
       script.domain = "www.chatbase.co";
       document.body.appendChild(script);
     };
