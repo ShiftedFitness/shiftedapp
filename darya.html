@@ -4,108 +4,62 @@
   <meta charset="utf-8" />
   <title>Darya — Chat + Meal Analysis</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
   <style>
     :root{
-      /* THEME */
-      --bg: #fcf7ea;              /* page background */
-      --header-bg: #0a5247;       /* header background */
-      --panel: #ffffff;           /* input panel background */
-      --panel-2: #ffffff;         /* subtle panel tint */
-      --text: #0f172a;            /* primary text */
-      --muted: #4b5563;           /* secondary text */
-      --border: #e6e1d5;          /* soft border on light bg */
-      --bubble-bot: #ffffff;      /* assistant bubble */
-      --bubble-user: #0a5247;     /* user bubble */
-      --bubble-user-text: #ffffff;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --radius: 16px;
+      --bg:#fcf7ea;
+      --header-bg:#0a5247;
+      --panel:#ffffff;
+      --panel-2:#ffffff;
+      --text:#0f172a;
+      --muted:#4b5563;
+      --border:#e6e1d5;
+      --bubble-bot:#ffffff;
+      --bubble-user:#0a5247;
+      --bubble-user-text:#ffffff;
+      --shadow:0 10px 30px rgba(0,0,0,.08);
+      --radius:16px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--text);
-      background: var(--bg);
-    }
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:var(--bg)}
 
     .wrap{height:100svh;max-width:880px;margin:0 auto;display:flex;flex-direction:column}
 
-    /* Header */
     header{
-      position:sticky; top:0; z-index:3;
-      padding:14px 18px;
-      background: var(--header-bg);
-      color:#ffffff;
-      border-bottom:1px solid rgba(0,0,0,.08);
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      position:sticky;top:0;z-index:3;padding:14px 18px;background:var(--header-bg);color:#fff;
+      border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.08)
     }
     .brand{display:flex;align-items:center;gap:12px}
-    .badge{
-      width:40px;height:40px;border-radius:12px;overflow:hidden;
-      display:grid;place-items:center;background:#fff;
-      box-shadow: var(--shadow);
-      flex:0 0 auto;
-    }
+    .badge{width:40px;height:40px;border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#fff;box-shadow:var(--shadow)}
     .badge img{width:100%;height:100%;object-fit:cover}
-    .title{font-weight:800; letter-spacing:.2px; font-size:18px}
+    .title{font-weight:800;letter-spacing:.2px;font-size:18px}
 
-    /* Chat area */
     .chat{flex:1;overflow:auto;padding:18px 14px 8px}
-    .row{display:flex;gap:10px;margin:12px 0; align-items:flex-end}
+    .row{display:flex;gap:10px;margin:12px 0;align-items:flex-end}
     .row.bot{justify-content:flex-start}
     .row.user{justify-content:flex-end}
-    .avatar{
-      width:28px;height:28px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
-      border:1px solid var(--border); background:#fff; color:#334155; font-size:13px; overflow:hidden;
-    }
+    .avatar{width:28px;height:28px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;border:1px solid var(--border);background:#fff;color:#334155;font-size:13px;overflow:hidden}
     .avatar img{width:100%;height:100%;object-fit:cover}
-    .bubble{
-      max-width:min(78%,640px);
-      padding:12px 14px; border-radius:14px; border:1px solid var(--border);
-      background:var(--bubble-bot); line-height:1.5; white-space:pre-wrap; box-shadow: var(--shadow);
-    }
-    .user .bubble{ background:var(--bubble-user); color:var(--bubble-user-text); border-color:rgba(0,0,0,.06) }
-    .bubble h4{margin:.1rem 0 .4rem 0; font-size:14px}
-    .meta{font-size:12px;color:var(--muted); margin-top:6px}
+    .bubble{max-width:min(78%,640px);padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bubble-bot);line-height:1.5;white-space:pre-wrap;box-shadow:var(--shadow)}
+    .user .bubble{background:var(--bubble-user);color:var(--bubble-user-text);border-color:rgba(0,0,0,.06)}
+    .bubble h4{margin:.1rem 0 .4rem 0;font-size:14px}
+    .meta{font-size:12px;color:var(--muted);margin-top:6px}
 
-    /* Typing */
-    .typing{display:inline-flex;gap:4px;align-items:center}
-    .dot{width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:b 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
-    @keyframes b{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
-
-    /* Input bar */
-    .inputbar{
-      position:sticky;bottom:0;padding:10px;
-      background: var(--panel-2);
-      border-top:1px solid var(--border);
-      z-index:2
-    }
-    .ibox{
-      display:flex;gap:8px;align-items:center;background:var(--panel);
-      border:1px solid var(--border); border-radius:14px; padding:8px 8px 8px 10px;
-      box-shadow: var(--shadow)
-    }
+    /* Input bar uses page background so it blends; only the input has a card */
+    .inputbar{position:sticky;bottom:0;padding:10px;background:transparent;border-top:none;z-index:2}
+    .ibox{display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:8px 8px 8px 10px;box-shadow:var(--shadow)}
     .ibox input{flex:1;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}
-    .btn{
-      border:1px solid var(--border); background:#ffffff; color:#0f172a;
-      border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer; transition:.2s
-    }
+    .btn{border:1px solid var(--border);background:#fff;color:#0f172a;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;transition:.2s}
     .btn:hover{transform:translateY(-1px)}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
     .attach{width:36px;height:36px;border-radius:10px;border:1px dashed var(--border);display:grid;place-items:center;cursor:pointer}
 
-    /* Progress bar */
     .bar{height:3px;background:linear-gradient(90deg,#0a5247,#31a497);border-radius:999px;transform:scaleX(0);transform-origin:left;transition:transform .25s}
 
-    /* Drag & drop overlay */
     .dropmask{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.15);z-index:10}
     .dropmask.on{display:flex}
-    .dropbox{border:2px dashed #94a3b8;border-radius:18px;padding:24px 28px;background:rgba(255,255,255,.7);backdrop-filter: blur(4px); color:#0f172a}
-
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .dropbox{border:2px dashed #94a3b8;border-radius:18px;padding:24px 28px;background:rgba(255,255,255,.7);backdrop-filter:blur(4px);color:#0f172a}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
   </style>
 </head>
 <body>
@@ -134,187 +88,121 @@
     </div>
   </div>
 
-  <!-- Drag & drop overlay -->
   <div id="dropmask" class="dropmask" aria-hidden="true">
     <div class="dropbox">Drop your meal photo to analyze</div>
   </div>
 
 <script>
-/* =========================
-   CONFIG — set these
-   ========================= */
+/* CONFIG */
 const CONFIG = {
-  BACKEND_BASE: "https://<your-site>.netlify.app", // e.g. https://shifted-fitness-ai.netlify.app
-  CHAT_ENDPOINT: "/.netlify/functions/chat",        // streams assistant text
-  ANALYZE_ENDPOINT: "/.netlify/functions/analyze-meal", // accepts multipart 'file' OR JSON { imageUrl }
-  USE_FILE_UPLOAD: true // true = send file via multipart; false = send a URL JSON
+  BACKEND_BASE: "https://<your-site>.netlify.app",
+  CHAT_ENDPOINT: "/.netlify/functions/chat",
+  ANALYZE_ENDPOINT: "/.netlify/functions/analyze-meal",
+  USE_FILE_UPLOAD: true
 };
 
-/* Personalization via URL: ?name=&diet=&goal=&uid= */
 const qs = new URLSearchParams(location.search);
-const ctx = {
-  uid:  qs.get("uid")  || null,
-  name: qs.get("name") || null,
-  diet: qs.get("diet") || null,
-  goal: qs.get("goal") || null,
-};
+const ctx = { uid:qs.get("uid")||null, name:qs.get("name")||null, diet:qs.get("diet")||null, goal:qs.get("goal")||null };
 
-/* ======= Elements & state ======= */
-const chatEl = document.getElementById('chat');
-const inputEl = document.getElementById('text');
-const fileEl  = document.getElementById('file');
-const sendEl  = document.getElementById('send');
-const dropmask = document.getElementById('dropmask');
-const progress = document.getElementById('progress');
-let history = []; // {role:'user'|'assistant', content:string}
+const chatEl=document.getElementById('chat'), inputEl=document.getElementById('text'), fileEl=document.getElementById('file'), sendEl=document.getElementById('send'), dropmask=document.getElementById('dropmask'), progress=document.getElementById('progress');
+let history=[];
 
-/* ======= Helpers ======= */
-function scrollToBottom(){ chatEl.scrollTop = chatEl.scrollHeight; }
-function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
+function scrollToBottom(){ chatEl.scrollTop=chatEl.scrollHeight; }
+function escapeHTML(s){ return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
 
+/* FIX: only append real nodes—no `null` so no "null" text appears */
 function row({role, html}){
-  const r = document.createElement('div'); r.className = `row ${role}`;
-  const avatar = document.createElement('div'); avatar.className='avatar';
-  if (role === 'bot') {
-    const img = document.createElement('img');
-    img.src = "https://res.cloudinary.com/dbfvogb95/image/upload/v1755002016/cropped_image_4_z8egmj.png";
-    img.alt = "Darya";
+  const r=document.createElement('div'); r.className=`row ${role}`;
+  const avatar=document.createElement('div'); avatar.className='avatar';
+  if(role==='bot'){
+    const img=document.createElement('img');
+    img.src='https://res.cloudinary.com/dbfvogb95/image/upload/v1755002016/cropped_image_4_z8egmj.png'; img.alt='Darya';
     avatar.appendChild(img);
   } else {
-    avatar.textContent = 'U';
+    avatar.textContent='U';
   }
-  const bubble = document.createElement('div'); bubble.className='bubble'; bubble.innerHTML = html;
-  r.append(role==='bot'?avatar:null, bubble, role==='user'?avatar:null);
+  const bubble=document.createElement('div'); bubble.className='bubble'; bubble.innerHTML=html;
+  if(role==='bot'){ r.append(avatar, bubble); } else { r.append(bubble, avatar); }
   chatEl.appendChild(r); scrollToBottom(); return bubble;
 }
+
 function typingRow(){
-  const b = row({role:'bot', html:`<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`});
-  return { remove: ()=> b.parentElement.remove() }
+  const b=row({role:'bot', html:`<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`});
+  return { remove:()=>b.parentElement.remove() }
 }
 
-/* ======= Image pipeline ======= */
-async function downscaleImage(file, maxSide=1600, quality=0.82){
-  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file); });
-  const canvas = document.createElement('canvas'); const ctx2 = canvas.getContext('2d');
-  let {width, height} = img;
-  const scale = Math.min(1, maxSide / Math.max(width,height));
-  width = Math.round(width*scale); height = Math.round(height*scale);
-  canvas.width = width; canvas.height = height;
-  ctx2.drawImage(img,0,0,width,height);
-  let blob = await new Promise(r=>canvas.toBlob(r,'image/jpeg', quality));
-  let q = quality;
-  while (blob && blob.size > 1.6*1024*1024 && q > 0.5){ q -= 0.06; blob = await new Promise(r=>canvas.toBlob(r,'image/jpeg', q)); }
-  return blob || file;
+/* image downscale + progress helpers unchanged from previous version */
+async function downscaleImage(file,maxSide=1600,quality=0.82){
+  const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file);});
+  const canvas=document.createElement('canvas'); const ctx2=canvas.getContext('2d');
+  let {width,height}=img; const scale=Math.min(1,maxSide/Math.max(width,height));
+  width=Math.round(width*scale); height=Math.round(height*scale);
+  canvas.width=width; canvas.height=height; ctx2.drawImage(img,0,0,width,height);
+  let blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',quality)); let q=quality;
+  while(blob && blob.size>1.6*1024*1024 && q>0.5){ q-=0.06; blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',q)); }
+  return blob||file;
 }
-function setProgress(p){ // 0..1
-  progress.style.transform = `scaleX(${Math.max(0, Math.min(1, p))})`;
-  progress.setAttribute('aria-hidden', 'false');
-  if(p >= 1) setTimeout(()=>{ progress.style.transform='scaleX(0)'; progress.setAttribute('aria-hidden','true'); }, 600);
-}
+function setProgress(p){ progress.style.transform=`scaleX(${Math.max(0,Math.min(1,p))})`; progress.setAttribute('aria-hidden','false'); if(p>=1)setTimeout(()=>{progress.style.transform='scaleX(0)';progress.setAttribute('aria-hidden','true');},600); }
 
-/* ======= Streaming chat ======= */
+/* chat + analyze handlers (same as before) */
 async function sendChat(message){
   if(!message.trim()) return;
-  history.push({role:'user', content: message});
-  row({role:'user', html: escapeHTML(message) });
+  history.push({role:'user',content:message});
+  row({role:'user',html:escapeHTML(message)});
   inputEl.value='';
-  const t = typingRow();
+  const t=typingRow();
   try{
-    const res = await fetch(CONFIG.BACKEND_BASE + CONFIG.CHAT_ENDPOINT, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ ctx, history, stream: true })
-    });
-    if(!res.ok || !res.body) throw new Error('Chat endpoint error');
-    // Create an empty bubble to stream into
+    const res=await fetch(CONFIG.BACKEND_BASE+CONFIG.CHAT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ctx,history,stream:true})});
+    if(!res.ok||!res.body) throw new Error('Chat endpoint error');
     t.remove();
-    const bubble = row({role:'bot', html:''});
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder(); let buf=''; let done;
-    while(true){
-      ({done, value} = await reader.read());
-      if(done) break;
-      buf += decoder.decode(value, {stream:true});
-      bubble.textContent = buf; scrollToBottom();
-    }
-    history.push({role:'assistant', content: buf.trim()});
-  }catch(e){
-    t.remove();
-    row({role:'bot', html:"Sorry, I couldn’t reach the chat service. Please try again."});
-  }
+    const bubble=row({role:'bot',html:''}); const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='',done;
+    while(true){({done,value}=await reader.read()); if(done)break; buf+=decoder.decode(value,{stream:true}); bubble.textContent=buf; scrollToBottom();}
+    history.push({role:'assistant',content:buf.trim()});
+  }catch(e){ t.remove(); row({role:'bot',html:"Sorry, I couldn’t reach the chat service. Please try again."}); }
 }
 
-/* ======= Analyze meal file ======= */
 async function analyzeFile(file){
-  // Show quick “image received” message inside a user bubble for clarity
-  row({role:'user', html:`📷 <span class="mono">Photo selected — sending…</span>`});
-  const wait = typingRow();
-  setProgress(.15);
+  row({role:'user',html:`📷 <span class="mono">Photo selected — sending…</span>`});
+  const wait=typingRow(); setProgress(.15);
   try{
-    const tiny = await downscaleImage(file);
-    setProgress(.4);
+    const tiny=await downscaleImage(file); setProgress(.4);
     let res;
-    if (CONFIG.USE_FILE_UPLOAD){
-      const form = new FormData();
-      form.append('file', tiny, 'meal.jpg');
-      if (ctx.uid) form.append('uid', ctx.uid);
-      res = await fetch(CONFIG.BACKEND_BASE + CONFIG.ANALYZE_ENDPOINT, { method:'POST', body: form });
-    } else {
-      const url = URL.createObjectURL(tiny);
-      res = await fetch(CONFIG.BACKEND_BASE + CONFIG.ANALYZE_ENDPOINT, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ imageUrl: url, uid: ctx.uid || '' })
-      });
+    if(CONFIG.USE_FILE_UPLOAD){
+      const form=new FormData(); form.append('file',tiny,'meal.jpg'); if(ctx.uid) form.append('uid',ctx.uid);
+      res=await fetch(CONFIG.BACKEND_BASE+CONFIG.ANALYZE_ENDPOINT,{method:'POST',body:form});
+    }else{
+      const url=URL.createObjectURL(tiny);
+      res=await fetch(CONFIG.BACKEND_BASE+CONFIG.ANALYZE_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageUrl:url,uid:ctx.uid||''})});
     }
     setProgress(.75);
     if(!res.ok) throw new Error(await res.text());
-    const d = await res.json(); // {calories,protein,carbs,fat,name?,description?,notes?,tips?,praise?}
+    const d=await res.json();
     wait.remove(); setProgress(1);
-
-    const title = d.name ? `<h4>${escapeHTML(d.name)}</h4>` : `<h4>Meal estimate</h4>`;
-    const desc  = d.description ? `<div class="meta">${escapeHTML(d.description)}</div>` : "";
-    const tips  = Array.isArray(d.tips)&&d.tips.length
-      ? `<div class="meta" style="margin-top:8px"><u>Make it even better</u>: ${d.tips.map(escapeHTML).join(' • ')}</div>`
-      : (d.praise ? `<div class="meta" style="margin-top:8px">${escapeHTML(d.praise)}</div>` : "");
-    const html =
-      `${title}${desc}
+    const title=d.name?`<h4>${escapeHTML(d.name)}</h4>`:`<h4>Meal estimate</h4>`;
+    const desc=d.description?`<div class="meta">${escapeHTML(d.description)}</div>`:"";
+    const tips=Array.isArray(d.tips)&&d.tips.length?`<div class="meta" style="margin-top:8px"><u>Make it even better</u>: ${d.tips.map(escapeHTML).join(' • ')}</div>`:(d.praise?`<div class="meta" style="margin-top:8px">${escapeHTML(d.praise)}</div>`:"");
+    const html=`${title}${desc}
 • ${Math.round(d.calories)} kcal
 • Protein ${Math.round(d.protein)} g
 • Carbs ${Math.round(d.carbs)} g
 • Fat ${Math.round(d.fat)} g
 
-Does this look about right?${tips ? '\n\n'+tips : ''}`;
-
-    history.push({role:'assistant', content: html.replace(/<[^>]+>/g,'')});
-    row({role:'bot', html: html.replace(/\n/g,'<br>') });
-  }catch(e){
-    wait.remove(); setProgress(1);
-    row({role:'bot', html:`I couldn’t analyze that photo just now.<br><span class="meta">Try a clear JPG/PNG/WebP under 2MB with the whole meal visible.</span>`});
-  }
+Does this look about right?${tips?'\n\n'+tips:''}`;
+    history.push({role:'assistant',content:html.replace(/<[^>]+>/g,'')});
+    row({role:'bot',html:html.replace(/\n/g,'<br>')});
+  }catch(e){ wait.remove(); setProgress(1); row({role:'bot',html:`I couldn’t analyze that photo just now.<br><span class="meta">Try a clear JPG/PNG/WebP under 2MB with the whole meal visible.</span>`}); }
 }
 
-/* ======= Wire up UI ======= */
-sendEl.addEventListener('click', ()=> sendChat(inputEl.value));
-inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(inputEl.value); }});
-fileEl.addEventListener('change', ()=>{
-  const f = fileEl.files?.[0]; if(!f) return;
-  analyzeFile(f);
-});
+/* Wire up */
+sendEl.addEventListener('click',()=>sendChat(inputEl.value));
+inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat(inputEl.value);}});
+fileEl.addEventListener('change',()=>{const f=fileEl.files?.[0]; if(f) analyzeFile(f);});
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();dropmask.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();dropmask.classList.remove('on');}));
+document.addEventListener('drop',e=>{const f=e.dataTransfer?.files?.[0]; if(f) analyzeFile(f);});
 
-/* Drag & drop */
-['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,(e)=>{ e.preventDefault(); dropmask.classList.add('on'); }));
-['dragleave','drop'].forEach(ev=>document.addEventListener(ev,(e)=>{ e.preventDefault(); dropmask.classList.remove('on'); }));
-document.addEventListener('drop',(e)=>{
-  const f = e.dataTransfer?.files?.[0]; if(!f) return;
-  analyzeFile(f);
-});
-
-/* Warm greeting */
-(function greet(){
-  const hi = ctx.name ? `Hi ${ctx.name}!` : "Hi!";
-  row({role:'bot', html: `${hi} I’m Darya. Upload a meal photo for a quick macro estimate, or ask me for coaching.`});
-})();
+/* Greeting */
+(function(){ const hi=ctx.name?`Hi ${ctx.name}!`:"Hi!"; row({role:'bot',html:`${hi} I’m Darya. Upload a meal photo for a quick macro estimate, or ask me for coaching.`}); })();
 </script>
 </body>
 </html>
