@@ -7,15 +7,14 @@
   <meta name="color-scheme" content="light" />
   <style>
     :root{
-      /* THEME */
-      --bg: #fcf7ea;              /* page + footer background */
-      --header-bg: #0a5247;       /* header + user bubble bg */
-      --panel: #ffffff;           /* input card */
-      --text: #0f172a;            /* main text */
-      --muted: #4b5563;           /* secondary text */
-      --border: #e6e1d5;          /* soft border */
-      --bubble-bot: #ffffff;      /* assistant bubble */
-      --bubble-user: #0a5247;     /* user bubble */
+      --bg: #fcf7ea;
+      --header-bg: #0a5247;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #4b5563;
+      --border: #e6e1d5;
+      --bubble-bot: #ffffff;
+      --bubble-user: #0a5247;
       --bubble-user-text: #ffffff;
       --shadow: 0 10px 30px rgba(0,0,0,.08);
       --radius: 16px;
@@ -47,8 +46,8 @@
       display:grid;place-items:center;background:#fff;
       box-shadow: var(--shadow); flex:0 0 auto;
     }
-    .badge img{width:100%;height:100%;object-fit:cover}
-    .title{font-weight:800; letter-spacing:.2px; font-size:18px}
+    .badge img{width:100%;height:100%;object-fit:contain} /* full image, not cropped */
+    .title{font-weight:400; letter-spacing:.2px; font-size:18px} /* normal weight text */
 
     /* Chat */
     .chat{flex:1;overflow:auto;padding:18px 14px 8px;background:var(--bg)}
@@ -59,7 +58,7 @@
       width:28px;height:28px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
       border:1px solid var(--border); background:#fff; color:#334155; font-size:13px; overflow:hidden
     }
-    .avatar img{width:100%;height:100%;object-fit:cover}
+    .avatar img{width:100%;height:100%;object-fit:contain} /* full image for bot icon */
     .bubble{
       max-width:min(78%,640px);
       padding:12px 14px; border-radius:14px; border:1px solid var(--border);
@@ -75,7 +74,7 @@
     .dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
     @keyframes b{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
 
-    /* Input area — sits on the same cream background */
+    /* Input bar */
     .inputbar{
       position:sticky;bottom:0;padding:10px; background: var(--bg);
       border-top:1px solid var(--border); z-index:2
@@ -139,40 +138,27 @@
   </div>
 
 <script>
-/* =========================
-   CONFIG — set these
-   ========================= */
+/* Config */
 const CONFIG = {
-  BACKEND_BASE: "https://<your-site>.netlify.app", // e.g. https://shifted-fitness-ai.netlify.app
-  CHAT_ENDPOINT: "/.netlify/functions/chat",        // streams assistant text
-  ANALYZE_ENDPOINT: "/.netlify/functions/analyze-meal", // accepts multipart 'file' OR JSON { imageUrl }
-  USE_FILE_UPLOAD: true // true = send file via multipart; false = send a URL JSON
+  BACKEND_BASE: "https://<your-site>.netlify.app",
+  CHAT_ENDPOINT: "/.netlify/functions/chat",
+  ANALYZE_ENDPOINT: "/.netlify/functions/analyze-meal",
+  USE_FILE_UPLOAD: true
 };
-
-/* Personalization via URL: ?name=&diet=&goal=&uid= */
 const qs = new URLSearchParams(location.search);
-const ctx = {
-  uid:  qs.get("uid")  || null,
-  name: qs.get("name") || null,
-  diet: qs.get("diet") || null,
-  goal: qs.get("goal") || null,
-};
+const ctx = { uid: qs.get("uid")||null, name: qs.get("name")||null, diet: qs.get("diet")||null, goal: qs.get("goal")||null };
 
-/* ======= Elements & state ======= */
 const chatEl = document.getElementById('chat');
 const inputEl = document.getElementById('text');
 const fileEl  = document.getElementById('file');
 const sendEl  = document.getElementById('send');
-const micEl   = document.getElementById('mic');
 const dropmask = document.getElementById('dropmask');
 const progress = document.getElementById('progress');
-let history = []; // {role:'user'|'assistant', content:string}
-let toldNoMic = false;
+let history = [];
 
-/* ======= Helpers ======= */
+/* Helpers */
 function scrollToBottom(){ chatEl.scrollTop = chatEl.scrollHeight; }
 function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
-
 function row({role, html}){
   const r = document.createElement('div'); r.className = `row ${role}`;
   const avatar = document.createElement('div'); avatar.className='avatar';
@@ -193,27 +179,7 @@ function typingRow(){
   return { remove: ()=> b.parentElement.remove() }
 }
 
-/* ======= Image pipeline ======= */
-async function downscaleImage(file, maxSide=1600, quality=0.82){
-  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file); });
-  const canvas = document.createElement('canvas'); const ctx2 = canvas.getContext('2d');
-  let {width, height} = img;
-  const scale = Math.min(1, maxSide / Math.max(width,height));
-  width = Math.round(width*scale); height = Math.round(height*scale);
-  canvas.width = width; canvas.height = height;
-  ctx2.drawImage(img,0,0,width,height);
-  let blob = await new Promise(r=>canvas.toBlob(r,'image/jpeg', quality));
-  let q = quality;
-  while (blob && blob.size > 1.6*1024*1024 && q > 0.5){ q -= 0.06; blob = await new Promise(r=>canvas.toBlob(r,'image/jpeg', q)); }
-  return blob || file;
-}
-function setProgress(p){ // 0..1
-  progress.style.transform = `scaleX(${Math.max(0, Math.min(1, p))})`;
-  progress.setAttribute('aria-hidden', 'false');
-  if(p >= 1) setTimeout(()=>{ progress.style.transform='scaleX(0)'; progress.setAttribute('aria-hidden','true'); }, 600);
-}
-
-/* ======= Streaming chat ======= */
+/* Chat send */
 async function sendChat(message){
   if(!message.trim()) return;
   history.push({role:'user', content: message});
@@ -227,7 +193,6 @@ async function sendChat(message){
       body: JSON.stringify({ ctx, history, stream: true })
     });
     if(!res.ok || !res.body) throw new Error('Chat endpoint error');
-    // Stream into a bubble
     t.remove();
     const bubble = row({role:'bot', html:''});
     const reader = res.body.getReader();
@@ -245,106 +210,37 @@ async function sendChat(message){
   }
 }
 
-/* ======= Analyze meal file ======= */
-async function analyzeFile(file){
-  row({role:'user', html:`📷 <span class="mono">Photo selected — sending…</span>`});
-  const wait = typingRow();
-  setProgress(.15);
-  try{
-    const tiny = await downscaleImage(file);
-    setProgress(.4);
-    let res;
-    if (CONFIG.USE_FILE_UPLOAD){
-      const form = new FormData();
-      form.append('file', tiny, 'meal.jpg');
-      if (ctx.uid) form.append('uid', ctx.uid);
-      res = await fetch(CONFIG.BACKEND_BASE + CONFIG.ANALYZE_ENDPOINT, { method:'POST', body: form });
-    } else {
-      const url = URL.createObjectURL(tiny);
-      res = await fetch(CONFIG.BACKEND_BASE + CONFIG.ANALYZE_ENDPOINT, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ imageUrl: url, uid: ctx.uid || '' })
-      });
-    }
-    setProgress(.75);
-    if(!res.ok) throw new Error(await res.text());
-    const d = await res.json();
-    wait.remove(); setProgress(1);
-
-    const title = d.name ? `<h4>${escapeHTML(d.name)}</h4>` : `<h4>Meal estimate</h4>`;
-    const desc  = d.description ? `<div class="meta">${escapeHTML(d.description)}</div>` : "";
-    const tips  = Array.isArray(d.tips)&&d.tips.length
-      ? `<div class="meta" style="margin-top:8px"><u>Make it even better</u>: ${d.tips.map(escapeHTML).join(' • ')}</div>`
-      : (d.praise ? `<div class="meta" style="margin-top:8px">${escapeHTML(d.praise)}</div>` : "");
-    const html =
-      `${title}${desc}
-• ${Math.round(d.calories)} kcal
-• Protein ${Math.round(d.protein)} g
-• Carbs ${Math.round(d.carbs)} g
-• Fat ${Math.round(d.fat)} g
-
-Does this look about right?${tips ? '\n\n'+tips : ''}`;
-
-    history.push({role:'assistant', content: html.replace(/<[^>]+>/g,'')});
-    row({role:'bot', html: html.replace(/\n/g,'<br>') });
-  }catch(e){
-    wait.remove(); setProgress(1);
-    row({role:'bot', html:`I couldn’t analyze that photo just now.<br><span class="meta">Try a clear JPG/PNG/WebP under 2MB with the whole meal visible.</span>`});
-  }
-}
-
-/* ======= Wire up UI ======= */
-sendEl.addEventListener('click', ()=> sendChat(inputEl.value));
-inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(inputEl.value); }});
-fileEl.addEventListener('change', ()=>{
-  const f = fileEl.files?.[0]; if(!f) return;
-  analyzeFile(f);
-});
-
-/* Drag & drop */
-['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,(e)=>{ e.preventDefault(); dropmask.classList.add('on'); }));
-['dragleave','drop'].forEach(ev=>document.addEventListener(ev,(e)=>{ e.preventDefault(); dropmask.classList.remove('on'); }));
-document.addEventListener('drop',(e)=>{
-  const f = e.dataTransfer?.files?.[0]; if(!f) return;
-  analyzeFile(f);
-});
-
-/* ======= Voice to text — Web Speech API with graceful fallback ======= */
+/* Voice-to-text always visible */
 (function setupVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  // If API not present, hide mic and (once) tell user
-  if(!SR){
-    micEl.style.display = 'none';
-    if(!toldNoMic){
-      toldNoMic = true;
-      row({role:'bot', html:`Voice input isn’t supported in this browser. You can still type or upload a photo.`});
-    }
-    return;
-  }
+  const micEl = document.getElementById('mic');
 
-  // Ask for mic permission up-front (helps iOS/Android webviews)
   async function ensureMicAccess(){
-    if (!navigator.mediaDevices?.getUserMedia) return true; // let SR try
+    if (!navigator.mediaDevices?.getUserMedia) return true;
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Immediately stop tracks; SpeechRecognition will use mic itself.
       stream.getTracks().forEach(t=>t.stop());
       return true;
     }catch(e){ return false; }
+  }
+
+  if(!SR){
+    micEl.addEventListener('click', ()=>{
+      row({role:'bot', html:`Voice input isn’t supported in this environment. You can still type or upload a photo.`});
+    });
+    return;
   }
 
   const rec = new SR();
   rec.lang = 'en-US';
   rec.continuous = false;
   rec.interimResults = true;
-
   let listening = false;
   let finalText = '';
 
   function start(){
     finalText = '';
-    try { rec.start(); } catch(_) { /* double starts throw */ }
+    try { rec.start(); } catch(_) {}
     listening = true;
     micEl.classList.add('listening');
     micEl.setAttribute('aria-pressed','true');
@@ -379,7 +275,6 @@ document.addEventListener('drop',(e)=>{
 
   rec.onerror = (e) => {
     stop();
-    // Common errors: "not-allowed", "no-speech"
     const msg = e.error === 'not-allowed'
       ? 'Microphone access was blocked. Please enable it in settings and try again.'
       : 'I couldn’t hear anything. Try again.';
@@ -392,7 +287,11 @@ document.addEventListener('drop',(e)=>{
   };
 })();
 
-/* ======= Warm greeting ======= */
+/* Wire up events */
+sendEl.addEventListener('click', ()=> sendChat(inputEl.value));
+inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendChat(inputEl.value); }});
+
+/* Greeting */
 (function greet(){
   const hi = ctx.name ? `Hi ${ctx.name}!` : "Hi!";
   row({role:'bot', html: `${hi} I’m Darya. Upload a meal photo for a quick macro estimate, or ask me for coaching.`});
