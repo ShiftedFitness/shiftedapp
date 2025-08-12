@@ -3,81 +3,77 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Darya Meal Analysis Test</title>
+  <title>Darya – Meal Analysis Test</title>
 </head>
 <body>
-<!-- Chatbase embed loader (bubble) -->
+<!-- Chatbase bubble embed (your agent ID kept as-is) -->
 <script>
 (function(){
   if(!window.chatbase || window.chatbase("getState") !== "initialized"){
-    window.chatbase = (...arguments) => {
-      if(!window.chatbase.q){ window.chatbase.q=[]; }
-      window.chatbase.q.push(arguments);
-    };
+    window.chatbase = (...args) => { (window.chatbase.q ||= []).push(args); };
     window.chatbase = new Proxy(window.chatbase, {
-      get(target, prop){
-        if(prop === "q"){ return target.q; }
-        return (...args) => target(prop, ...args);
-      }
+      get(target, prop){ return prop === "q" ? target.q : (...a) => target(prop, ...a); }
     });
   }
-  const onLoad = function(){
-    const script = document.createElement("script");
-    script.src = "https://www.chatbase.co/embed.min.js";
-    script.id = "ls6EbqCtawFYWC6vqtmoy"; // <-- your Chatbase agent ID
-    script.domain = "www.chatbase.co";
-    document.body.appendChild(script);
+  const onLoad = () => {
+    const s = document.createElement("script");
+    s.src = "https://www.chatbase.co/embed.min.js";
+    s.id = "ls6EbqCtawFYWC6vqtmoy";   // <-- your Chatbase agent ID
+    s.domain = "www.chatbase.co";
+    document.body.appendChild(s);
   };
-  if(document.readyState === "complete"){ onLoad(); }
-  else { window.addEventListener("load", onLoad); }
+  if (document.readyState === "complete") onLoad(); else window.addEventListener("load", onLoad);
 })();
 </script>
 
 <script>
-// Helper: wait for Chatbase to fully initialize
-function chatbaseReady(cb) {
-  if (typeof window.chatbase === "function" && window.chatbase("getState") === "initialized") {
-    cb();
-  } else {
-    setTimeout(() => chatbaseReady(cb), 100);
-  }
+// Wait for Chatbase to initialize before calling any API
+function chatbaseReady(cb){
+  if (typeof window.chatbase === "function" && window.chatbase("getState") === "initialized") cb();
+  else setTimeout(()=>chatbaseReady(cb), 100);
 }
 
 chatbaseReady(() => {
-  // --- Read URL parameters ---
-  const q = new URLSearchParams(location.search);
-  const name = q.get("name") || "";
-  const diet = q.get("diet") || "";
-  const goal = q.get("goal") || "";
+  // --- Read URL params (optional but nice) ---
+  const qs = new URLSearchParams(location.search);
+  const name = qs.get("name") || "";
+  const diet = qs.get("diet") || "";
+  const goal = qs.get("goal") || "";
 
-  // --- Pass user info into Chatbase ---
+  // Pass context into the bot
   window.chatbase("setCustomFields", { name, diet, goal });
 
-  // --- Set greeting message ---
-  const greeting = name
-    ? `Hi ${name}! Do you have a photo of your meal for me to analyse?`
-    : `Hi! Do you have a photo of your meal for me to analyse?`;
+  // Friendly greeting on open
+  window.chatbase("setInitialMessages", [
+    name ? `Hi ${name}! Do you have a photo of your meal for me to analyse?`
+         : `Hi! Do you have a photo of your meal for me to analyse?`
+  ]);
 
-  window.chatbase("setInitialMessages", [greeting]);
+  // Auto-open the bubble
+  window.chatbase.open(); // <-- this is the correct "open chat" call for the bubble
 
-  // --- Auto-open the chat bubble ---
-  window.chatbase("setOpen", true);
-
-  // --- Register the meal_photo_form ---
+  // --- Client-side custom form: image upload ---
   window.chatbase.registerFormSchema({
     meal_photo_form: async () => ({
       fields: [
-        { name: "mealPhoto", type: "image", label: "Upload or snap your meal" }
+        { name: "mealPhoto", type: "image", label: "Upload or snap your meal (JPG/PNG under 2MB)" }
       ],
-      submitButtonText: "Analyze meal"
+      submitButtonText: "Analyze meal",
+      // Not all builds expose onSubmit, but if present this gives great UX
+      onSubmit: (values) => {
+        try { window.chatbase("sendMessage", "Image received — analyzing now…"); } catch(e){}
+      }
     })
   });
 
-  // --- Register the analyze_meal tool ---
-  const PROXY_URL = "https://<your-site>/.netlify/functions/analyze-meal"; // replace with your proxy URL
+  // --- Client action: send image URL to your proxy for analysis ---
+  const PROXY_URL = "https://<your-site>/.netlify/functions/analyze-meal"; // TODO: replace
+
   window.chatbase.registerTools({
     analyze_meal: async (args) => {
       const imageUrl = args?.imageUrl;
+      if (!imageUrl) return { status: "error", message: "I didn’t receive the image URL. Please upload again." };
+
       try {
         const res = await fetch(PROXY_URL, {
           method: "POST",
@@ -85,13 +81,24 @@ chatbaseReady(() => {
           body: JSON.stringify({ imageUrl })
         });
         if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
+        const data = await res.json(); // { calories, protein, carbs, fat, name?, description?, notes? }
+
+        // Return a string for the assistant to show
+        const title = data.name ? `Meal: ${data.name}` : "Meal estimate";
+        const desc  = data.description ? `\n${data.description}` : "";
+        const notes = data.notes ? `\nNote: ${data.notes}` : "";
+
         return {
           status: "success",
-          data: `Estimated macros:\n• ${data.calories} kcal\n• Protein ${data.protein}g\n• Carbs ${data.carbs}g\n• Fat ${data.fat}g`
+          data:
+            `${title}${desc}\n` +
+            `• ${data.calories} kcal\n` +
+            `• Protein ${data.protein} g\n` +
+            `• Carbs ${data.carbs} g\n` +
+            `• Fat ${data.fat} g${notes}`
         };
       } catch (e) {
-        return { status: "error", message: "I couldn’t analyze that photo just now." };
+        return { status: "error", message: "I couldn’t analyze that photo just now. Please try another image or try again in a moment." };
       }
     }
   });
