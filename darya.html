@@ -3,104 +3,92 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Darya – Meal Analysis Test</title>
+  <title>Darya – Meal Analysis (auto form)</title>
 </head>
 <body>
-<!-- Chatbase bubble embed (your agent ID kept as-is) -->
+<!-- Chatbase bubble embed -->
 <script>
 (function(){
-  if(!window.chatbase || window.chatbase("getState") !== "initialized"){
-    window.chatbase = (...args) => { (window.chatbase.q ||= []).push(args); };
-    window.chatbase = new Proxy(window.chatbase, {
-      get(target, prop){ return prop === "q" ? target.q : (...a) => target(prop, ...a); }
-    });
+  if(!window.chatbase || window.chatbase("getState")!=="initialized"){
+    window.chatbase=(...a)=>{(window.chatbase.q ||= []).push(a)};
+    window.chatbase=new Proxy(window.chatbase,{get(t,p){return p==="q"?t.q:(...x)=>t(p,...x)}});
   }
-  const onLoad = () => {
-    const s = document.createElement("script");
-    s.src = "https://www.chatbase.co/embed.min.js";
-    s.id = "ls6EbqCtawFYWC6vqtmoy";   // <-- your Chatbase agent ID
-    s.domain = "www.chatbase.co";
-    document.body.appendChild(s);
+  const onLoad=()=>{const s=document.createElement("script");
+    s.src="https://www.chatbase.co/embed.min.js";
+    s.id="ls6EbqCtawFYWC6vqtmoy"; s.domain="www.chatbase.co"; document.body.appendChild(s);
   };
-  if (document.readyState === "complete") onLoad(); else window.addEventListener("load", onLoad);
+  document.readyState==="complete"?onLoad():window.addEventListener("load",onLoad);
 })();
 </script>
 
 <script>
-// Wait for Chatbase to initialize before calling any API
-function chatbaseReady(cb){
-  if (typeof window.chatbase === "function" && window.chatbase("getState") === "initialized") cb();
-  else setTimeout(()=>chatbaseReady(cb), 100);
-}
+// wait until widget init
+function ready(cb){ if(typeof chatbase==="function" && chatbase("getState")==="initialized") cb(); else setTimeout(()=>ready(cb),100); }
 
-chatbaseReady(() => {
-  // --- Read URL params (optional but nice) ---
-  const qs = new URLSearchParams(location.search);
-  const name = qs.get("name") || "";
-  const diet = qs.get("diet") || "";
-  const goal = qs.get("goal") || "";
-
-  // Pass context into the bot
-  window.chatbase("setCustomFields", { name, diet, goal });
-
-  // Friendly greeting on open
-  window.chatbase("setInitialMessages", [
-    name ? `Hi ${name}! Do you have a photo of your meal for me to analyse?`
-         : `Hi! Do you have a photo of your meal for me to analyse?`
+ready(() => {
+  // params for greeting/prompt context
+  const qs=new URLSearchParams(location.search);
+  const name=qs.get("name")||""; const diet=qs.get("diet")||""; const goal=qs.get("goal")||"";
+  window.chatbase("setCustomFields",{name,diet,goal});
+  window.chatbase("setInitialMessages",[
+    name?`Hi ${name}! Do you have a photo of your meal for me to analyse?`:
+          `Hi! Do you have a photo of your meal for me to analyse?`,
+    `Upload a clear photo (JPG/PNG/WebP under 2MB).`
   ]);
 
-  // Auto-open the bubble
-  window.chatbase.open(); // <-- this is the correct "open chat" call for the bubble
+  // open bubble
+  window.chatbase.open();
 
-  // --- Client-side custom form: image upload ---
-  window.chatbase.registerFormSchema({
-    meal_photo_form: async () => ({
-      fields: [
-        { name: "mealPhoto", type: "image", label: "Upload or snap your meal (JPG/PNG under 2MB)" }
-      ],
-      submitButtonText: "Analyze meal",
-      // Not all builds expose onSubmit, but if present this gives great UX
-      onSubmit: (values) => {
-        try { window.chatbase("sendMessage", "Image received — analyzing now…"); } catch(e){}
+  // -------- 1) FORCE-SHOW FORM IMMEDIATELY (client-driven) --------
+  // This bypasses the model needing to "call the form"
+  const showUploadForm = () => {
+    window.chatbase("sendForm", {
+      form: {
+        title: "Upload your meal",
+        fields: [{ type:"image", name:"mealPhoto", label:"Upload or snap your meal (≤2MB JPG/PNG/WebP)" }],
+        submitLabel: "Analyze meal"
+      },
+      callback: async (values) => {
+        // UX: status line
+        window.chatbase("sendMessage","Image received — analyzing now…");
+        const imageUrl = values?.mealPhoto;
+        try {
+          const res = await fetch("https://<your-site>/.netlify/functions/analyze-meal",{
+            method:"POST", headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ imageUrl })
+          });
+          if(!res.ok) throw new Error(await res.text());
+          const data = await res.json(); // {calories,protein,carbs,fat,name?,description?,notes?}
+
+          const title = data.name ? `Meal: ${data.name}` : `Meal estimate`;
+          const desc  = data.description ? `\n${data.description}` : "";
+          const notes = data.notes ? `\nNote: ${data.notes}` : "";
+          window.chatbase("sendMessage",
+            `${title}${desc}\n• ${data.calories} kcal\n• Protein ${data.protein} g\n• Carbs ${data.carbs} g\n• Fat ${data.fat} g${notes}\n` +
+            `Does this look about right?`
+          );
+        } catch(err){
+          window.chatbase("sendMessage","I couldn’t analyze that photo just now. Please try again in a moment.");
+        }
       }
+    });
+  };
+
+  // show the form right away
+  showUploadForm();
+
+  // -------- 2) (Optional) also register tools/forms for LLM-driven path --------
+  window.chatbase.registerFormSchema({
+    meal_photo_form: async ()=>({
+      fields:[{name:"mealPhoto",type:"image",label:"Upload or snap your meal (≤2MB JPG/PNG/WebP)"}],
+      submitButtonText:"Analyze meal"
     })
   });
 
-  // --- Client action: send image URL to your proxy for analysis ---
-  const PROXY_URL = "https://<your-site>/.netlify/functions/analyze-meal"; // TODO: replace
-
   window.chatbase.registerTools({
-    analyze_meal: async (args) => {
-      const imageUrl = args?.imageUrl;
-      if (!imageUrl) return { status: "error", message: "I didn’t receive the image URL. Please upload again." };
-
-      try {
-        const res = await fetch(PROXY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json(); // { calories, protein, carbs, fat, name?, description?, notes? }
-
-        // Return a string for the assistant to show
-        const title = data.name ? `Meal: ${data.name}` : "Meal estimate";
-        const desc  = data.description ? `\n${data.description}` : "";
-        const notes = data.notes ? `\nNote: ${data.notes}` : "";
-
-        return {
-          status: "success",
-          data:
-            `${title}${desc}\n` +
-            `• ${data.calories} kcal\n` +
-            `• Protein ${data.protein} g\n` +
-            `• Carbs ${data.carbs} g\n` +
-            `• Fat ${data.fat} g${notes}`
-        };
-      } catch (e) {
-        return { status: "error", message: "I couldn’t analyze that photo just now. Please try another image or try again in a moment." };
-      }
-    }
+    analyze_meal: async (args)=>({ status:"error", message:"Direct analyze disabled in fallback mode." })
+    // ^ keep stubbed if you’re relying on the client-driven flow above.
+    // Once your proxy is solid, you can reuse the same fetch here.
   });
 });
 </script>
