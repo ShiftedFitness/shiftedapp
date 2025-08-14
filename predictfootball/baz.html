@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PredictFootball.ai – LadBot</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background-color: #0E0E0E; /* Slate black */
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #ladbot-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    zapier-interfaces-chatbot-embed {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="ladbot-container">
+    <!-- Zapier Inline Chatbot Embed -->
+    <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
+    <zapier-interfaces-chatbot-embed is-popup="false" chatbot-id="cmdzzl0hq000art6szqhsfyzf"></zapier-interfaces-chatbot-embed>
+  </div>
+
+</body>
+</html>
