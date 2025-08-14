@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Countdown – Grey Theme</title>
+<style>
+  :root{
+    /* tweak via query params if you want (see bottom) */
+    --bg:#1f7f66;          /* green page bg in your screenshot */
+    --card:#e7e7e7;        /* light grey card */
+    --card-2:#cfe0da22;    /* soft outer glow */
+    --text:#1e1e1e;        /* primary text */
+    --muted:#6b6b6b;       /* muted labels */
+    --chip:#333333;        /* dark grey buttons */
+    --chip-text:#ffffff;   /* button text */
+    --radius:16px;
+    --shadow:0 10px 20px rgba(0,0,0,.15);
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  body{background:var(--bg); color:var(--text);}
+
+  .wrap{
+    min-height:100%;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:28px 18px 40px;
+  }
+
+  .card{
+    width:min(680px,100%);
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow), 0 0 0 10px var(--card-2);
+    padding:22px 18px;
+  }
+
+  .title{
+    font-size:18px; font-weight:600; color:var(--muted);
+    margin:0 0 8px 2px;
+  }
+
+  .row{
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    flex-wrap:wrap;
+  }
+
+  .match{
+    font-size:22px; font-weight:700; letter-spacing:.2px;
+  }
+
+  .chips{
+    display:flex; gap:10px;
+  }
+  .chip{
+    background:var(--chip); color:var(--chip-text);
+    border-radius:10px; padding:10px 14px;
+    font-weight:700; min-width:52px; text-align:center;
+    font-variant-numeric:tabular-nums;
+    box-shadow:inset 0 -2px 0 rgba(255,255,255,.06);
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(4,auto); gap:16px;
+    margin-top:16px;
+  }
+  .unit{ text-align:center; }
+  .num{
+    font-size:38px; font-weight:800; line-height:1; 
+    font-variant-numeric:tabular-nums;
+    color:#111;
+  }
+  .label{ font-size:12px; color:var(--muted); margin-top:6px; letter-spacing:.4px; }
+
+  /* compact mode for small WebViews */
+  @media (max-width:420px){
+    .num{font-size:32px}
+    .match{font-size:18px}
+    .chip{min-width:46px; padding:8px 12px}
+  }
+</style>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div id="title" class="title"></div>
+
+      <div class="row">
+        <div id="match" class="match">Countdown</div>
+        <div class="chips">
+          <div id="dChip" class="chip">--</div>
+          <div id="hChip" class="chip">--</div>
+          <div id="mChip" class="chip">--</div>
+          <div id="sChip" class="chip">--</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="unit"><div id="d" class="num">--</div><div class="label">Days</div></div>
+        <div class="unit"><div id="h" class="num">--</div><div class="label">Hours</div></div>
+        <div class="unit"><div id="m" class="num">--</div><div class="label">Minutes</div></div>
+        <div class="unit"><div id="s" class="num">--</div><div class="label">Seconds</div></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Read query params
+  const qs = new URLSearchParams(location.search);
+  const end = new Date(qs.get("end") || "2025-12-31T23:59:59Z").getTime();
+  const label = qs.get("label") || "Time Remaining";
+  const heading = qs.get("heading") || "Home Team V Away Team";
+  const doneText = qs.get("done") || "Time’s up!";
+
+  // Optional color overrides via ?bg=&card=&chip= etc.
+  const setVar = (k,v)=> v && document.documentElement.style.setProperty(`--${k}`, v);
+  setVar("bg", qs.get("bg"));
+  setVar("card", qs.get("card"));
+  setVar("text", qs.get("text"));
+  setVar("muted", qs.get("muted"));
+  setVar("chip", qs.get("chip"));
+  setVar("chip-text", qs.get("chipText"));
+
+  // Bind UI
+  const tEl = document.getElementById("title");
+  const hEl = document.getElementById("match");
+  const d = document.getElementById("d"), h = document.getElementById("h"),
+        m = document.getElementById("m"), s = document.getElementById("s");
+  const dC = document.getElementById("dChip"), hC = document.getElementById("hChip"),
+        mC = document.getElementById("mChip"), sC = document.getElementById("sChip");
+
+  tEl.textContent = label;
+  hEl.textContent = heading;
+
+  function tick(){
+    const now = Date.now();
+    let t = Math.max(0, end - now);
+    const days = Math.floor(t/86400000); t%=86400000;
+    const hrs  = Math.floor(t/3600000);  t%=3600000;
+    const mins = Math.floor(t/60000);    t%=60000;
+    const secs = Math.floor(t/1000);
+
+    const pad = n => String(n).padStart(2,"0");
+
+    d.textContent = days;
+    h.textContent = pad(hrs);
+    m.textContent = pad(mins);
+    s.textContent = pad(secs);
+
+    dC.textContent = days + "d";
+    hC.textContent = pad(hrs);
+    mC.textContent = pad(mins);
+    sC.textContent = pad(secs);
+
+    if(end <= now){ tEl.textContent = doneText; clearInterval(iv); }
+  }
+  tick(); const iv = setInterval(tick, 250);
+</script>
+</body>
+</html>
