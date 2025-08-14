@@ -1,55 +1,90 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Countdown – Simple</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Countdown – Embed</title>
 <style>
+  /* Fluid sizing + safe-area padding so it fits in small iframes/WebViews */
   :root{
-    --bg:#1f7f66;          /* green background */
-    --card:#e7e7e7;        /* light grey card */
-    --text:#1e1e1e;        /* primary text */
-    --muted:#6b6b6b;       /* muted labels */
-    --radius:16px;
-    --shadow:0 10px 20px rgba(0,0,0,.15);
+    --bg:#1f7f66;         /* page bg (can be your app green) */
+    --card:#e7e7e7;       /* light grey card */
+    --text:#1e1e1e;
+    --muted:#6b6b6b;
+    --pad:clamp(10px, 3.5vw, 24px);
+    --radius:clamp(10px, 4vw, 22px);
+    --title:clamp(14px, 4.5vw, 20px);
+    --num:clamp(24px, 10vw, 44px);
+    --label:clamp(10px, 3.5vw, 13px);
   }
-  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-  body{background:var(--bg); color:var(--text);}
-  .wrap{
-    min-height:100%;
-    display:flex; align-items:flex-start; justify-content:center;
-    padding:28px 18px 40px;
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    -webkit-text-size-adjust: 100%;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden; /* prevent any accidental scrollbars in tight iframes */
   }
-  .card{
-    width:min(680px,100%);
-    background:var(--card);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:22px 18px;
+
+  .wrap {
+    min-height: 100%;
+    box-sizing: border-box;
+    padding:
+      calc(var(--pad) + env(safe-area-inset-top))
+      calc(var(--pad) + env(safe-area-inset-right))
+      calc(var(--pad) + env(safe-area-inset-bottom))
+      calc(var(--pad) + env(safe-area-inset-left));
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
   }
-  .title{
-    font-size:18px; font-weight:600; color:var(--muted);
-    margin:0 0 12px 2px;
+
+  .card {
+    width: 100%;
+    max-width: 980px;            /* grows on tablets, fills on phones */
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: var(--pad);
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    box-sizing: border-box;
   }
-  .grid{
-    display:grid; grid-template-columns:repeat(4,auto); gap:16px;
-    margin-top:8px;
+
+  .title {
+    font-size: var(--title);
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 clamp(6px, 2vw, 14px) 2px;
   }
-  .unit{ text-align:center; }
-  .num{
-    font-size:38px; font-weight:800; line-height:1; 
-    font-variant-numeric:tabular-nums;
-    color:#111;
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 3vw, 18px);
   }
-  .label{ font-size:12px; color:var(--muted); margin-top:6px; letter-spacing:.4px; }
-  @media (max-width:420px){
-    .num{font-size:32px}
+
+  .unit { text-align: center; }
+  .num {
+    font-size: var(--num);
+    font-weight: 800;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    color: #111;
+    white-space: nowrap;
+  }
+  .label {
+    font-size: var(--label);
+    color: var(--muted);
+    margin-top: clamp(4px, 1.5vw, 8px);
+    letter-spacing: .4px;
   }
 </style>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" role="group" aria-label="Countdown timer">
       <div id="title" class="title">Time Remaining to Submit</div>
-      <div class="grid">
+      <div class="grid" aria-live="polite">
         <div class="unit"><div id="d" class="num">--</div><div class="label">Days</div></div>
         <div class="unit"><div id="h" class="num">--</div><div class="label">Hours</div></div>
         <div class="unit"><div id="m" class="num">--</div><div class="label">Minutes</div></div>
@@ -59,35 +94,32 @@
   </div>
 
 <script>
-  const qs = new URLSearchParams(location.search);
-  const end = new Date(qs.get("end") || "2025-12-31T23:59:59Z").getTime();
-  const doneText = qs.get("done") || "Time’s up!";
+  // Hard-coded to Aug 16, 2025 @ 12:00 CET/CEST (UTC+02:00 in August)
+  const end = new Date('2025-08-16T12:00:00+02:00').getTime();
 
-  const d = document.getElementById("d"),
-        h = document.getElementById("h"),
-        m = document.getElementById("m"),
-        s = document.getElementById("s"),
-        t = document.getElementById("title");
+  const d = document.getElementById('d');
+  const h = document.getElementById('h');
+  const m = document.getElementById('m');
+  const s = document.getElementById('s');
+  const pad = n => String(n).padStart(2, '0');
 
   function tick(){
     const now = Date.now();
-    let tLeft = Math.max(0, end - now);
-    const days = Math.floor(tLeft/86400000); tLeft%=86400000;
-    const hrs  = Math.floor(tLeft/3600000);  tLeft%=3600000;
-    const mins = Math.floor(tLeft/60000);    tLeft%=60000;
-    const secs = Math.floor(tLeft/1000);
+    let t = Math.max(0, end - now);
 
-    const pad = n => String(n).padStart(2,"0");
+    const days = Math.floor(t / 86400000); t %= 86400000;
+    const hrs  = Math.floor(t / 3600000);  t %= 3600000;
+    const mins = Math.floor(t / 60000);    t %= 60000;
+    const secs = Math.floor(t / 1000);
 
     d.textContent = days;
     h.textContent = pad(hrs);
     m.textContent = pad(mins);
     s.textContent = pad(secs);
-
-    if(end <= now){ t.textContent = doneText; clearInterval(iv); }
   }
+
   tick();
-  const iv = setInterval(tick, 250);
+  const iv = setInterval(tick, 1000);
 </script>
 </body>
 </html>
