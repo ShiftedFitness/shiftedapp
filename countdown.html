@@ -2,15 +2,13 @@
 <html lang="en">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Countdown – Embed</title>
+<title>Countdown – Tight & Transparent</title>
 <style>
-  /* Fluid sizing + safe-area padding so it fits in small iframes/WebViews */
   :root{
-    --bg:#1f7f66;         /* page bg (can be your app green) */
     --card:#e7e7e7;       /* light grey card */
     --text:#1e1e1e;
     --muted:#6b6b6b;
-    --pad:clamp(10px, 3.5vw, 24px);
+    --pad:clamp(8px, 3vw, 20px);
     --radius:clamp(10px, 4vw, 22px);
     --title:clamp(14px, 4.5vw, 20px);
     --num:clamp(24px, 10vw, 44px);
@@ -21,29 +19,23 @@
     height: 100%;
     width: 100%;
     margin: 0;
-    -webkit-text-size-adjust: 100%;
+    background: transparent; /* make the page background transparent */
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
     color: var(--text);
-    overflow: hidden; /* prevent any accidental scrollbars in tight iframes */
+    overflow: hidden;
   }
 
   .wrap {
-    min-height: 100%;
+    width: 100%;
     box-sizing: border-box;
-    padding:
-      calc(var(--pad) + env(safe-area-inset-top))
-      calc(var(--pad) + env(safe-area-inset-right))
-      calc(var(--pad) + env(safe-area-inset-bottom))
-      calc(var(--pad) + env(safe-area-inset-left));
+    padding: 0; /* no padding, hug top */
     display: flex;
-    align-items: flex-start;
     justify-content: center;
   }
 
   .card {
     width: 100%;
-    max-width: 980px;            /* grows on tablets, fills on phones */
+    max-width: 980px;
     background: var(--card);
     border-radius: var(--radius);
     padding: var(--pad);
@@ -119,7 +111,7 @@
   }
 
   tick();
-  const iv = setInterval(tick, 1000);
+  setInterval(tick, 1000);
 </script>
 </body>
 </html>
